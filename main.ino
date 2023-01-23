@@ -1,8 +1,31 @@
 // Pong game in arduino
 
 #include <stdlib.h>
+#include <MD_Parola.h>
+#include <MD_MAX72xx.h>
+#include <SPI.h>
 
-typedef struct 
+// Players paddle button pin
+const int p1UpPin = 5;
+const int p1DownPin = 6;
+const int p2UpPin = 7;
+const int p2DownPin = 8;
+
+// SPI pins
+const int SSPin = 10;
+const int MOSIPin = 11;
+const int MISOPin = 12;
+const int SCKPin = 13;
+
+#define HARDWARE_TYPE MD_MAX72XX::FC16_HW
+#define MAX_DEVICES 1
+#define CS_PIN 2
+#define DATA_PIN 3
+#define CLK_PIN 4
+
+MD_Parola mapDisplay = MD_Parola(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, MAX_DEVICES);
+
+typedef struct
 {
     int x;
     int y;
@@ -14,15 +37,13 @@ typedef struct
 {
     int x;
     int y;
-    int is_up;
-    int is_down;
 } Paddle;
 
 typedef struct
 {
     int x;
     int y;
-    bool is_blocked;  
+    bool is_blocked;
 } Tile;
 
 typedef struct
@@ -91,12 +112,11 @@ void game_tick()
     // Check Finish
     if (ball.y == 0)
     {
-        // Player 2 wins
-
+        // Player 2 scores
     }
     else if (ball.y == 7)
     {
-        // Player 1 wins
+        // Player 1 scores
     }
 
     // Reset Map
@@ -109,30 +129,26 @@ void game_tick()
     }
 
     // Move Paddles
-    if (paddle1.is_up)
+    if (digitalRead(p1UpPin) == HIGH && paddle1.x > 0)
     {
         paddle1.x -= 1;
     }
-    else if (paddle1.is_down)
+    else if (digitalRead(p1DownPin) == HIGH && paddle1.x < 7)
     {
         paddle1.x += 1;
     }
-    paddle1.is_up = false;
-    paddle1.is_down = false;
     map.tiles[paddle1.x][paddle1.y].is_blocked = true;
     map.tiles[paddle1.x + 1][paddle1.y].is_blocked = true;
     map.tiles[paddle1.x + 2][paddle1.y].is_blocked = true;
 
-    if (paddle2.is_up)
+    if (digitalRead(p2UpPin) == HIGH && paddle2.x > 0)
     {
         paddle2.x -= 1;
     }
-    else if (paddle2.is_down)
+    else if (digitalRead(p2DownPin) == HIGH && paddle2.x < 7)
     {
         paddle2.x += 1;
     }
-    paddle2.is_up = false;
-    paddle2.is_down = false;
     map.tiles[paddle2.x][paddle2.y].is_blocked = true;
     map.tiles[paddle2.x + 1][paddle2.y].is_blocked = true;
     map.tiles[paddle2.x + 2][paddle2.y].is_blocked = true;
@@ -140,7 +156,7 @@ void game_tick()
     // Move Ball
     int new_x = ball.x + ball.xSpeed;
     int new_y = ball.y + ball.ySpeed;
-    
+
     if (new_x < 0)
     {
         ball.xSpeed = -ball.xSpeed;
@@ -171,7 +187,7 @@ void game_tick()
 
     ball.x = new_x;
     ball.y = new_y;
-    
+
     // Update View Map
     for (int i = 0; i < 8; i++)
     {
@@ -185,10 +201,26 @@ void game_tick()
 
 void setup()
 {
+    mapDisplay.setIntensity(0);
+    mapDisplay.displayClear();
 
+    pinMode(p1UpPin, INPUT);
+    pinMode(p1DownPin, INPUT);
+    pinMode(p2UpPin, INPUT);
+    pinMode(p2DownPin, INPUT);
+
+    start_game();
 }
+
+unsigned long elapsedTime, previousTime = 0;
+const unsigned long tickTime = 500;
 
 void loop()
 {
-
+    elapsedTime = millis() - previousTime;
+    if (elapsedTime >= tickTime)
+    {
+        game_tick();
+        previousTime = millis();
+    }
 }
