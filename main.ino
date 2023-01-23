@@ -104,16 +104,16 @@ void start_game()
     view_map[ball.x][ball.y] = true;
 }
 
-void game_tick()
+int game_tick()
 {
     // Check Finish
     if (ball.y == 0)
     {
-        // Player 2 scores
+        return 2;
     }
     else if (ball.y == 7)
     {
-        // Player 1 scores
+        return 1;
     }
 
     // Reset Map
@@ -194,6 +194,8 @@ void game_tick()
         }
     }
     view_map[ball.x][ball.y] = true;
+    
+    return 0;
 }
 
 void setup()
@@ -217,7 +219,17 @@ void loop()
     elapsedTime = millis() - previousTime;
     if (elapsedTime >= tickTime)
     {
-        game_tick();
+        int result = game_tick();
+        if (result == 1)
+        {
+            Serial.println("Player 1 Wins!");
+            start_game();
+        }
+        else if (result == 2)
+        {
+            Serial.println("Player 2 Wins!");
+            start_game();
+        }
         previousTime = millis();
     }
 }
