@@ -5,13 +5,13 @@
 #include <MD_MAX72xx.h>
 #include <SPI.h>
 
-// Players paddle button pin
+// Players paddle button pin, (when the circuit is finalized, these numbers may change)
 const int p1UpPin = 5;
 const int p1DownPin = 6;
 const int p2UpPin = 7;
 const int p2DownPin = 8;
 
-// SPI pins
+// SPI pins, (when the circuit is finalized, these numbers may change)
 const int SSPin = 10;
 const int MOSIPin = 11;
 const int MISOPin = 12;
@@ -19,11 +19,8 @@ const int SCKPin = 13;
 
 #define HARDWARE_TYPE MD_MAX72XX::FC16_HW
 #define MAX_DEVICES 1
-#define CS_PIN 2
-#define DATA_PIN 3
-#define CLK_PIN 4
 
-MD_Parola mapDisplay = MD_Parola(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, MAX_DEVICES);
+MD_Parola mapDisplay = MD_Parola(HARDWARE_TYPE, MOSIPin, SCKPin, SSPin, MAX_DEVICES);
 
 typedef struct
 {
@@ -201,7 +198,7 @@ void game_tick()
 
 void setup()
 {
-    mapDisplay.setIntensity(0);
+    mapDisplay.setIntensity(0); // brightness (0, 15)
     mapDisplay.displayClear();
 
     pinMode(p1UpPin, INPUT);
