@@ -46,12 +46,12 @@ typedef struct
 typedef struct
 {
     Tile tiles[8][8];
-} Map;
+} GameMap;
 
 Ball ball;
 Paddle paddle1;
 Paddle paddle2;
-Map map;
+GameMap game_map;
 
 bool view_map[8][8];
 
@@ -83,22 +83,22 @@ void start_game()
     {
         for (int j = 0; j < 8; j++)
         {
-            map.tiles[i][j].is_blocked = false;
+            game_map.tiles[i][j].is_blocked = false;
         }
     }
-    map.tiles[paddle1.x][paddle1.y].is_blocked = true;
-    map.tiles[paddle1.x + 1][paddle1.y].is_blocked = true;
-    map.tiles[paddle1.x + 2][paddle1.y].is_blocked = true;
-    map.tiles[paddle2.x][paddle2.y].is_blocked = true;
-    map.tiles[paddle2.x + 1][paddle2.y].is_blocked = true;
-    map.tiles[paddle2.x + 2][paddle2.y].is_blocked = true;
+    game_map.tiles[paddle1.x][paddle1.y].is_blocked = true;
+    game_map.tiles[paddle1.x + 1][paddle1.y].is_blocked = true;
+    game_map.tiles[paddle1.x + 2][paddle1.y].is_blocked = true;
+    game_map.tiles[paddle2.x][paddle2.y].is_blocked = true;
+    game_map.tiles[paddle2.x + 1][paddle2.y].is_blocked = true;
+    game_map.tiles[paddle2.x + 2][paddle2.y].is_blocked = true;
 
     // Update View Map
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < 8; j++)
         {
-            view_map[i][j] = map.tiles[i][j].is_blocked;
+            view_map[i][j] = game_map.tiles[i][j].is_blocked;
         }
     }
     view_map[ball.x][ball.y] = true;
@@ -121,7 +121,7 @@ int game_tick()
     {
         for (int j = 0; j < 8; j++)
         {
-            map.tiles[i][j].is_blocked = false;
+            game_map.tiles[i][j].is_blocked = false;
         }
     }
 
@@ -134,9 +134,9 @@ int game_tick()
     {
         paddle1.x += 1;
     }
-    map.tiles[paddle1.x][paddle1.y].is_blocked = true;
-    map.tiles[paddle1.x + 1][paddle1.y].is_blocked = true;
-    map.tiles[paddle1.x + 2][paddle1.y].is_blocked = true;
+    game_map.tiles[paddle1.x][paddle1.y].is_blocked = true;
+    game_map.tiles[paddle1.x + 1][paddle1.y].is_blocked = true;
+    game_map.tiles[paddle1.x + 2][paddle1.y].is_blocked = true;
 
     if (digitalRead(p2UpPin) == HIGH && paddle2.x > 0)
     {
@@ -146,9 +146,9 @@ int game_tick()
     {
         paddle2.x += 1;
     }
-    map.tiles[paddle2.x][paddle2.y].is_blocked = true;
-    map.tiles[paddle2.x + 1][paddle2.y].is_blocked = true;
-    map.tiles[paddle2.x + 2][paddle2.y].is_blocked = true;
+    game_map.tiles[paddle2.x][paddle2.y].is_blocked = true;
+    game_map.tiles[paddle2.x + 1][paddle2.y].is_blocked = true;
+    game_map.tiles[paddle2.x + 2][paddle2.y].is_blocked = true;
 
     // Move Ball
     int new_x = ball.x + ball.xSpeed;
@@ -167,7 +167,7 @@ int game_tick()
 
     if (new_y == 0)
     {
-        if (map.tiles[new_x][new_y].is_blocked)
+        if (game_map.tiles[new_x][new_y].is_blocked)
         {
             ball.ySpeed = -ball.ySpeed;
             new_y = 2;
@@ -175,7 +175,7 @@ int game_tick()
     }
     else if (new_y == 7)
     {
-        if (map.tiles[new_x][new_y].is_blocked)
+        if (game_map.tiles[new_x][new_y].is_blocked)
         {
             ball.ySpeed = -ball.ySpeed;
             new_y = 5;
@@ -190,7 +190,7 @@ int game_tick()
     {
         for (int j = 0; j < 8; j++)
         {
-            view_map[i][j] = map.tiles[i][j].is_blocked;
+            view_map[i][j] = game_map.tiles[i][j].is_blocked;
         }
     }
     view_map[ball.x][ball.y] = true;
