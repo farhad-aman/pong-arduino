@@ -1,26 +1,34 @@
 // Pong game in arduino
 
 #include <stdlib.h>
-#include <MD_Parola.h>
-#include <MD_MAX72xx.h>
 #include <SPI.h>
 
-// Players paddle button pin, (when the circuit is finalized, these numbers may change)
-const int p1UpPin = 5;
-const int p1DownPin = 6;
-const int p2UpPin = 7;
-const int p2DownPin = 8;
+// Defining the chip select pin
+// #define CS 7
 
-// SPI pins, (when the circuit is finalized, these numbers may change)
-const int SSPin = 10;
-const int MOSIPin = 11;
-const int MISOPin = 12;
-const int SCKPin = 13;
+// MAX7219 Control Registers
+#define DECODE_MODE 9
+#define INTENSITY 10
+#define SCAN_LIMIT 11
+#define SHUTDOWN 12
+#define DISPLAY_TEST 16
 
-#define HARDWARE_TYPE MD_MAX72XX::FC16_HW
-#define MAX_DEVICES 1
+// Players paddle button pin number
+const int p1UpPin = A5;
+const int p1DownPin = A4;
+const int p2UpPin = 0;
+const int p2DownPin = 1;
 
-MD_Parola mapDisplay = MD_Parola(HARDWARE_TYPE, MOSIPin, SCKPin, SSPin, MAX_DEVICES);
+// SPI pins
+const int SSPin = 10;   // LOAD
+const int MOSIPin = 11; // DIN
+const int MISOPin = 12; // not used!
+const int SCKPin = 13;  // CLOCK
+
+// #define HARDWARE_TYPE MD_MAX72XX::FC16_HW
+// #define MAX_DEVICES 1
+
+// MD_Parola mapDisplay = MD_Parola(HARDWARE_TYPE, MOSIPin, SCKPin, SSPin, MAX_DEVICES);
 
 typedef struct
 {
@@ -54,6 +62,38 @@ Paddle paddle2;
 GameMap game_map;
 
 bool view_map[8][8];
+int LED_matrix[8];
+
+void send_data(uint8_t address, uint8_t value)
+{
+    digitalWrite(SSPin, LOW);  // start the transfer of data
+    SPI.transfer(address);     // send the address
+    SPI.transfer(value);       // send the value of data
+    digitalWrite(SSPin, HIGH); // end the transfer of data
+}
+
+void update_led()
+{
+    // int x = 0b00000000;
+    int x = 0;
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            int map_value = view_map[i][j];
+            x |= (map_value << (8 - j));
+            // example: if i = 0, j = 0, map_value = true --> x = (00000000) | (10000000) = (10000000)
+            // example: if i = 0, j = 1, map_value = true --> x = (10000000) | (01000000) = (11000000)
+            // example: if i = 0, j = 2, map_value = false --> x = (11000000) | (00000000) = (11000000)
+        }
+        send_data(i + 1, LED_matrix[i]);
+    }
+
+    // for (int i = 1; i < 9; i++)
+    // {
+    //   send_data(i, LED_matrix[i - 1]);
+    // }
+}
 
 int random(int min, int max)
 {
@@ -102,6 +142,9 @@ void start_game()
         }
     }
     view_map[ball.x][ball.y] = true;
+
+    // Update 8x8 LED Matrix using SPI
+    update_led();
 }
 
 int game_tick()
@@ -124,6 +167,9 @@ int game_tick()
             game_map.tiles[i][j].is_blocked = false;
         }
     }
+
+    // Update 8x8 LED Matrix using SPI
+    update_led();
 
     // Move Paddles
     if (digitalRead(p1UpPin) == HIGH && paddle1.x > 0)
@@ -194,14 +240,28 @@ int game_tick()
         }
     }
     view_map[ball.x][ball.y] = true;
-    
+
+    // Update 8x8 LED Matrix using SPI
+    update_led();
+
     return 0;
 }
 
 void setup()
 {
-    mapDisplay.setIntensity(0); // brightness (0, 15)
-    mapDisplay.displayClear();
+    // mapDisplay.setIntensity(0); // brightness (0, 15)
+    // mapDisplay.displayClear();
+
+    pinMode(SSPin, OUTPUT);
+    SPI.setBitOrder(MSBFIRST);     // MSB first
+    SPI.begin();                   // Start SPI
+    send_data(DISPLAY_TEST, 0x01); // Run a test - All LED segments lit
+    delay(1000);
+    send_data(DISPLAY_TEST, 0x00); // Finish test mode
+    send_data(DECODE_MODE, 0x00);  // Disable BCD mode
+    send_data(INTENSITY, 0x0e);    // Use lowest intensity
+    send_data(SCAN_LIMIT, 0x0f);   // Scan all digits
+    send_data(SHUTDOWN, 0x01);     // Turn on the chip
 
     pinMode(p1UpPin, INPUT);
     pinMode(p1DownPin, INPUT);
