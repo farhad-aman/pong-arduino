@@ -25,11 +25,6 @@ const int MOSIPin = 11; // DIN
 const int MISOPin = 12; // not used!
 const int SCKPin = 13;  // CLOCK
 
-// #define HARDWARE_TYPE MD_MAX72XX::FC16_HW
-// #define MAX_DEVICES 1
-
-// MD_Parola mapDisplay = MD_Parola(HARDWARE_TYPE, MOSIPin, SCKPin, SSPin, MAX_DEVICES);
-
 typedef struct
 {
     int x;
@@ -62,7 +57,7 @@ Paddle paddle2;
 GameMap game_map;
 
 bool view_map[8][8];
-int LED_matrix[8];
+byte LED_matrix[8] = {B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000};
 
 void send_data(uint8_t address, uint8_t value)
 {
@@ -74,25 +69,15 @@ void send_data(uint8_t address, uint8_t value)
 
 void update_led()
 {
-    // int x = 0b00000000;
-    int x = 0;
     for (int i = 0; i < 8; i++)
     {
         for (int j = 0; j < 8; j++)
         {
-            int map_value = view_map[i][j];
-            x |= (map_value << (7 - j));
-            // example: if i = 0, j = 0, map_value = true --> x = (00000000) | (10000000) = (10000000)
-            // example: if i = 0, j = 1, map_value = true --> x = (10000000) | (01000000) = (11000000)
-            // example: if i = 0, j = 2, map_value = false --> x = (11000000) | (00000000) = (11000000)
+            int map_value = int(view_map[i][j]);
+            bitWrite(LED_matrix[i], j, map_value);
         }
         send_data(i + 1, LED_matrix[i]);
     }
-
-    // for (int i = 1; i < 9; i++)
-    // {
-    //   send_data(i, LED_matrix[i - 1]);
-    // }
 }
 
 int random(int min, int max)
@@ -251,7 +236,7 @@ void setup()
 {
     // mapDisplay.setIntensity(0); // brightness (0, 15)
     // mapDisplay.displayClear();
-
+    Serial.begin(9600);
     pinMode(SSPin, OUTPUT);
     SPI.setBitOrder(MSBFIRST);     // MSB first
     SPI.begin();                   // Start SPI
