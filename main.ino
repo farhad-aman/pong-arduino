@@ -81,7 +81,7 @@ void update_led()
         for (int j = 0; j < 8; j++)
         {
             int map_value = view_map[i][j];
-            x |= (map_value << (8 - j));
+            x |= (map_value << (7 - j));
             // example: if i = 0, j = 0, map_value = true --> x = (00000000) | (10000000) = (10000000)
             // example: if i = 0, j = 1, map_value = true --> x = (10000000) | (01000000) = (11000000)
             // example: if i = 0, j = 2, map_value = false --> x = (11000000) | (00000000) = (11000000)
