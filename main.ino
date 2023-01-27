@@ -3,27 +3,30 @@
 #include <stdlib.h>
 #include <SPI.h>
 
-// Defining the chip select pin
-// #define CS 7
-
-// MAX7219 Control Registers
-#define DECODE_MODE 9
-#define INTENSITY 10
-#define SCAN_LIMIT 11
-#define SHUTDOWN 12
-#define DISPLAY_TEST 16
-
-// Players paddle button pin number
-const int p1UpPin = A5;
-const int p1DownPin = A4;
-const int p2UpPin = 0;
-const int p2DownPin = 1;
+// Players Paddle Button Pins
+#define p1DownPin A0
+#define p1UpPin A1
+#define p2DownPin A2
+#define p2UpPin A3
 
 // SPI pins
-const int SSPin = 10;   // LOAD
-const int MOSIPin = 11; // DIN
-const int MISOPin = 12; // not used!
-const int SCKPin = 13;  // CLOCK
+const int CS = 10; // Chip Select or LOAD
+
+// MAX7219 Control Register Addresses
+const byte REG_NOOP = 0x00;
+const byte REG_DIGIT0 = 0x01;
+const byte REG_DIGIT1 = 0x02;
+const byte REG_DIGIT2 = 0x03;
+const byte REG_DIGIT3 = 0x04;
+const byte REG_DIGIT4 = 0x05;
+const byte REG_DIGIT5 = 0x06;
+const byte REG_DIGIT6 = 0x07;
+const byte REG_DIGIT7 = 0x08;
+const byte REG_DECODEMODE = 0x09;
+const byte REG_INTENSITY = 0x0A;
+const byte REG_SCANLIMIT = 0x0B;
+const byte REG_SHUTDOWN = 0x0C;
+const byte REG_DISPLAYTEST = 0x0F;
 
 typedef struct
 {
@@ -59,12 +62,12 @@ GameMap game_map;
 bool view_map[8][8];
 byte LED_matrix[8] = {B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000};
 
-void send_data(uint8_t address, uint8_t value)
+void send_data(byte address, byte value)
 {
-    digitalWrite(SSPin, LOW);  // start the transfer of data
-    SPI.transfer(address);     // send the address
-    SPI.transfer(value);       // send the value of data
-    digitalWrite(SSPin, HIGH); // end the transfer of data
+    digitalWrite(CS, LOW);  // start the transfer of data
+    SPI.transfer(address);  // send the address
+    SPI.transfer(value);    // send the value of data
+    digitalWrite(CS, HIGH); // end the transfer of data
 }
 
 void update_led()
@@ -76,6 +79,10 @@ void update_led()
             int map_value = int(view_map[i][j]);
             bitWrite(LED_matrix[i], j, map_value);
         }
+    }
+
+    for (int i = 0; i < 8; i++)
+    {
         send_data(i + 1, LED_matrix[i]);
     }
 }
@@ -234,19 +241,12 @@ int game_tick()
 
 void setup()
 {
-    // mapDisplay.setIntensity(0); // brightness (0, 15)
-    // mapDisplay.displayClear();
-    Serial.begin(9600);
-    pinMode(SSPin, OUTPUT);
-    SPI.setBitOrder(MSBFIRST);     // MSB first
-    SPI.begin();                   // Start SPI
-    send_data(DISPLAY_TEST, 0x01); // Run a test - All LED segments lit
-    delay(1000);
-    send_data(DISPLAY_TEST, 0x00); // Finish test mode
-    send_data(DECODE_MODE, 0x00);  // Disable BCD mode
-    send_data(INTENSITY, 0x0e);    // Use lowest intensity
-    send_data(SCAN_LIMIT, 0x0f);   // Scan all digits
-    send_data(SHUTDOWN, 0x01);     // Turn on the chip
+    pinMode(CS, OUTPUT);
+    SPI.begin();                    // Start SPI
+    SPI.setBitOrder(MSBFIRST);      // MSB first
+    send_data(REG_INTENSITY, 0x08); // set the brightness of the LEDs
+    send_data(REG_SHUTDOWN, 0x01);  // turn on the LEDs
+    send_data(REG_SCANLIMIT, 0x07); // set the scan limit to 8 (for a 8x8 matrix)
 
     pinMode(p1UpPin, INPUT);
     pinMode(p1DownPin, INPUT);
