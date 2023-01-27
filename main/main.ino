@@ -168,7 +168,7 @@ int game_tick()
     {
         paddle1.x -= 1;
     }
-    else if (digitalRead(p1DownPin) == HIGH && paddle1.x < 7)
+    else if (digitalRead(p1DownPin) == HIGH && paddle1.x < 5)
     {
         paddle1.x += 1;
     }
@@ -180,7 +180,7 @@ int game_tick()
     {
         paddle2.x -= 1;
     }
-    else if (digitalRead(p2DownPin) == HIGH && paddle2.x < 7)
+    else if (digitalRead(p2DownPin) == HIGH && paddle2.x < 5)
     {
         paddle2.x += 1;
     }
